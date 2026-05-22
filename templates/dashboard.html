@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>UPI Offline Mesh — Demo</title>
+<style>
+  :root{--bg:#0f1117;--card:#1a1d27;--border:#2a2d3a;--accent:#6c63ff;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--text:#e2e8f0;--muted:#64748b}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;padding:24px}
+  h1{font-size:1.6rem;font-weight:700;margin-bottom:4px}
+  .subtitle{color:var(--muted);font-size:.9rem;margin-bottom:24px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
+  .card h2{font-size:.95rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
+  .btn{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:.9rem;font-weight:600;cursor:pointer;transition:opacity .15s}
+  .btn:hover{opacity:.85}
+  .btn.secondary{background:#2a2d3a;border:1px solid var(--border)}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+  label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:4px;margin-top:10px}
+  select,input{width:100%;background:#0f1117;border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:.9rem}
+  select:focus,input:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+  table{width:100%;border-collapse:collapse;font-size:.85rem}
+  th{color:var(--muted);font-weight:500;text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)}
+  td{padding:7px 8px;border-bottom:1px solid #1e2130}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78rem;font-weight:600}
+  .settled{background:#14532d;color:var(--green)}
+  .duplicate{background:#422006;color:var(--yellow)}
+  .invalid{background:#450a0a;color:var(--red)}
+  .log{background:#0a0c12;border-radius:8px;padding:12px;font-family:monospace;font-size:.8rem;max-height:180px;overflow-y:auto;color:#94a3b8;margin-top:8px}
+  .log p{padding:2px 0;border-bottom:1px solid #12141c}
+  .device-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)}
+  .device-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:8px;flex-shrink:0}
+  .device-dot.online{background:var(--green)}
+  #step-flow{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+  .step-btn{flex:1;min-width:150px;text-align:center;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--card);cursor:pointer;transition:background .2s,border-color .2s}
+  .step-btn:hover{background:#22263a;border-color:var(--accent)}
+  .step-btn .step-num{font-size:.75rem;color:var(--muted)}
+  .step-btn .step-label{font-size:.9rem;font-weight:600;margin-top:2px}
+</style>
+</head>
+<body>
+<h1>⚡ UPI Offline Mesh</h1>
+<p class="subtitle">Python/FastAPI port — mesh-routed deferred settlement demo</p>
+
+<div id="step-flow">
+  <div class="step-btn" onclick="doSend()">
+    <div class="step-num">Step 1</div>
+    <div class="step-label">📤 Inject into Mesh</div>
+  </div>
+  <div class="step-btn" onclick="doGossip()">
+    <div class="step-num">Step 2</div>
+    <div class="step-label">🔄 Run Gossip Round</div>
+  </div>
+  <div class="step-btn" onclick="doFlush()">
+    <div class="step-num">Step 3</div>
+    <div class="step-label">📡 Bridges Upload</div>
+  </div>
+  <div class="step-btn" onclick="doReset()">
+    <div class="step-num">Reset</div>
+    <div class="step-label">🗑️ Clear Mesh</div>
+  </div>
+</div>
+
+<div class="grid">
+  <!-- Send form -->
+  <div class="card">
+    <h2>Compose Payment</h2>
+    <label>Sender</label>
+    <select id="sender">
+      <option value="alice">Alice</option>
+      <option value="bob">Bob</option>
+      <option value="charlie">Charlie</option>
+      <option value="diana">Diana</option>
+    </select>
+    <label>Receiver</label>
+    <select id="receiver">
+      <option value="bob">Bob</option>
+      <option value="alice">Alice</option>
+      <option value="charlie">Charlie</option>
+      <option value="eve">Eve</option>
+    </select>
+    <label>Amount (₹)</label>
+    <input type="number" id="amount" value="100" min="1"/>
+    <label>PIN</label>
+    <input type="password" id="pin" value="1234" placeholder="Any 4+ digits"/>
+    <br/>
+    <button class="btn" onclick="doSend()" style="margin-top:10px">📤 Inject into Mesh</button>
+  </div>
+
+  <!-- Mesh state -->
+  <div class="card">
+    <h2>Mesh Devices</h2>
+    <div id="mesh-state">Loading…</div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn secondary" onclick="doGossip()">🔄 Gossip Round</button>
+      <button class="btn secondary" onclick="doFlush()">📡 Flush Bridges</button>
+    </div>
+  </div>
+
+  <!-- Accounts -->
+  <div class="card">
+    <h2>Account Balances</h2>
+    <table>
+      <thead><tr><th>User</th><th>Balance</th></tr></thead>
+      <tbody id="accounts-body"><tr><td colspan="2">Loading…</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- Transactions -->
+  <div class="card">
+    <h2>Transaction Ledger</h2>
+    <table>
+      <thead><tr><th>ID</th><th>From→To</th><th>₹</th></tr></thead>
+      <tbody id="tx-body"><tr><td colspan="3">No transactions yet</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Activity log -->
+<div class="card">
+  <h2>Activity Log</h2>
+  <div class="log" id="log"><p>Server started. Ready.</p></div>
+</div>
+
+<script>
+const log = (msg, cls='') => {
+  const d = document.getElementById('log');
+  const p = document.createElement('p');
+  p.innerHTML = `<span style="color:var(--muted)">${new Date().toLocaleTimeString()}</span>  ${msg}`;
+  if(cls) p.style.color = cls==='ok'?'var(--green)':cls==='err'?'var(--red)':'var(--yellow)';
+  d.prepend(p);
+};
+
+const api = async (method, path, body) => {
+  const opts = {method, headers:{'Content-Type':'application/json'}};
+  if(body) opts.body = JSON.stringify(body);
+  const r = await fetch('/api'+path, opts);
+  return r.json();
+};
+
+const refreshAll = () => { loadAccounts(); loadTx(); loadMesh(); };
+
+async function loadAccounts(){
+  const rows = await api('GET','/accounts');
+  document.getElementById('accounts-body').innerHTML = rows.map(r=>
+    `<tr><td>${r.name}</td><td>₹${r.balance.toFixed(2)}</td></tr>`
+  ).join('');
+}
+
+async function loadTx(){
+  const rows = await api('GET','/transactions');
+  if(!rows.length){ document.getElementById('tx-body').innerHTML='<tr><td colspan="3">No transactions yet</td></tr>'; return; }
+  document.getElementById('tx-body').innerHTML = rows.map(r=>
+    `<tr><td>#${r.id}</td><td>${r.sender_name}→${r.receiver_name}</td><td>₹${r.amount.toFixed(2)}</td></tr>`
+  ).join('');
+}
+
+async function loadMesh(){
+  const devices = await api('GET','/mesh/state');
+  document.getElementById('mesh-state').innerHTML = devices.map(d=>
+    `<div class="device-row">
+       <div style="display:flex;align-items:center">
+         <div class="device-dot ${d.has_internet?'online':''}"></div>
+         <span>${d.device_id}</span>
+         ${d.has_internet?'<span style="font-size:.75rem;color:var(--green);margin-left:6px">bridge</span>':''}
+       </div>
+       <span style="font-size:.85rem;color:var(--muted)">${d.packet_count} packet${d.packet_count!==1?'s':''}</span>
+     </div>`
+  ).join('');
+}
+
+async function doSend(){
+  const body = {
+    sender_id:   document.getElementById('sender').value,
+    receiver_id: document.getElementById('receiver').value,
+    amount:      parseFloat(document.getElementById('amount').value),
+    pin:         document.getElementById('pin').value,
+  };
+  const r = await api('POST','/demo/send', body);
+  log(`📤 Packet <code>${r.packet_id?.slice(0,8)}…</code> injected. TTL=${r.ttl}`, 'ok');
+  refreshAll();
+}
+
+async function doGossip(){
+  const r = await api('POST','/mesh/gossip');
+  log('🔄 Gossip round complete');
+  loadMesh();
+}
+
+async function doFlush(){
+  const r = await api('POST','/mesh/flush');
+  (r.results||[]).forEach(res=>{
+    const badge = res.outcome==='SETTLED'?'<span class="badge settled">SETTLED</span>':
+                  res.outcome==='DUPLICATE_DROPPED'?'<span class="badge duplicate">DUPLICATE</span>':
+                  '<span class="badge invalid">INVALID</span>';
+    log(`📡 ${res.bridge} → ${badge} ${res.reason||'tx#'+res.transaction_id}`,
+        res.outcome==='SETTLED'?'ok':res.outcome==='DUPLICATE_DROPPED'?'warn':'err');
+  });
+  if(!r.results?.length) log('📡 No bridge packets to flush','warn');
+  refreshAll();
+}
+
+async function doReset(){
+  await api('POST','/mesh/reset');
+  log('🗑️ Mesh and idempotency cache cleared','warn');
+  loadMesh();
+}
+
+// initial load
+refreshAll();
+setInterval(refreshAll, 5000);
+</script>
+</body>
+</html>
