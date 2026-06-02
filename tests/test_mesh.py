@@ -1,7 +1,7 @@
 """
 tests/test_mesh.py
 
-Python port of IdempotencyConcurrencyTest.java.
+Python port of IdempotencyConcurrencyTest.Python.
 
 Tests
 -----

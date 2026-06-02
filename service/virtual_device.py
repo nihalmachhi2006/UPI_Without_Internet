@@ -3,7 +3,7 @@ service/virtual_device.py
 
 VirtualDevice — simulates one phone in the offline mesh.
 Has a packet store and a flag indicating whether it currently has internet.
-Mirrors VirtualDevice.java.
+Mirrors VirtualDevice.Python.
 """
 
 from __future__ import annotations

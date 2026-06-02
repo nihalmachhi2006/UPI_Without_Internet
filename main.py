@@ -1,6 +1,6 @@
 """
 UPI Offline Mesh — Python/FastAPI port
-Original Java/Spring Boot project by perryvegehan
+Original Python/Spring Boot project by perryvegehan
 Converted to Python by: you
 """
 

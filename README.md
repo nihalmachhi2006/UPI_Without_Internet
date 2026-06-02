@@ -1,7 +1,7 @@
 # UPI Offline Mesh — Python/FastAPI Port
 
-> **Python conversion** of [perryvegehan/UPI_Without_Internet](https://github.com/perryvegehan/UPI_Without_Internet) (Java/Spring Boot).  
-> All original logic, architecture, and cryptography preserved — zero Java required.
+> **Python conversion** of [perryvegehan/UPI_Without_Internet](https://github.com/perryvegehan/UPI_Without_Internet) (Python/Spring Boot).  
+> All original logic, architecture, and cryptography preserved — zero Python required.
 
 A FastAPI backend that demonstrates **offline UPI payments routed through a Bluetooth-style mesh network**. You're in a basement with zero connectivity. You encrypt a payment, broadcast it to nearby phones, and the packet hops device-to-device until _some_ phone walks outside, gets 4G, and silently uploads it to this backend. The backend decrypts, deduplicates, and settles — exactly once.
 
@@ -17,13 +17,13 @@ A FastAPI backend that demonstrates **offline UPI payments routed through a Blue
 
 ## Tech Stack
 
-| Layer | Java original | Python port |
+| Layer | Python original | Python port |
 |-------|--------------|-------------|
 | Web framework | Spring Boot 3.3 | **FastAPI + Uvicorn** |
 | Database | H2 in-memory (JPA) | **SQLite in-memory (sqlite3)** |
 | Idempotency store | `ConcurrentHashMap` | **`dict` + `threading.Lock`** |
 | Crypto | JCA (RSA + AES) | **`cryptography` library** |
-| Schema validation | Java records | **Pydantic v2** |
+| Schema validation | Python records | **Pydantic v2** |
 | Tests | JUnit 5 | **pytest** |
 | Templates | Thymeleaf | **Plain HTML served by FastAPI** |
 
@@ -146,7 +146,7 @@ Click **🗑️ Clear Mesh** to wipe all device stores and the idempotency cache
 A stranger's phone carries your payment. **Solution: Hybrid encryption (RSA-OAEP + AES-256-GCM).** Only the server holds the private key. AES-GCM is _authenticated_ encryption — one flipped bit causes decryption to throw `InvalidTag`, so the server can never process tampered data.
 
 ### 2. Duplicate storms
-Three bridges hold the same packet and POST simultaneously. **Solution: Atomic compare-and-set on the ciphertext hash.** `dict` + `threading.Lock` (in Python) / `ConcurrentHashMap.putIfAbsent` (in Java) — exactly one thread wins, the rest are short-circuited as `DUPLICATE_DROPPED` before any DB work. In production: Redis `SET key NX EX 86400`.
+Three bridges hold the same packet and POST simultaneously. **Solution: Atomic compare-and-set on the ciphertext hash.** `dict` + `threading.Lock` (in Python) / `ConcurrentHashMap.putIfAbsent` (in Python) — exactly one thread wins, the rest are short-circuited as `DUPLICATE_DROPPED` before any DB work. In production: Redis `SET key NX EX 86400`.
 
 ### 3. Replay attacks
 An attacker replays a captured ciphertext. **Solution:** The inner payload contains a `signed_at` timestamp (server rejects packets older than 24h) and a `nonce` UUID (each unique payment has a distinct ciphertext). A replayed packet is byte-identical → same hash → caught by the idempotency cache.
@@ -232,7 +232,7 @@ For a portfolio project, present this honestly as **"mesh-routed deferred settle
 
 ## Credits
 
-Original Java/Spring Boot implementation by [perryvegehan](https://github.com/perryvegehan/UPI_Without_Internet).  
+Original Python/Spring Boot implementation by [perryvegehan](https://github.com/perryvegehan/UPI_Without_Internet).  
 Python port preserves all architecture decisions, cryptographic design, and the three core proofs.
 
 ## License

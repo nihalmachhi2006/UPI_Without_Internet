@@ -2,7 +2,7 @@
 service/mesh_simulator.py
 
 MeshSimulatorService — manages the five virtual phones and drives the
-gossip protocol. Mirrors MeshSimulatorService.java.
+gossip protocol. Mirrors MeshSimulatorService.Python.
 
 Gossip rule: every device broadcasts every packet it holds to every other
 device. TTL decrements by 1 per hop; packets with TTL=0 are dropped.

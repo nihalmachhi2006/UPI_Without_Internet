@@ -9,7 +9,7 @@ BridgeIngestionService — THE server-side pipeline:
   4. Freshness check  (rejects replays older than 24h)
   5. Settle (debit + credit + ledger)
 
-Mirrors BridgeIngestionService.java exactly.
+Mirrors BridgeIngestionService.Python exactly.
 """
 
 import time

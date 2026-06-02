@@ -7,7 +7,7 @@
 | Python      | 3.10+   | `python --version` |
 | pip         | any     | `pip --version` |
 
-That's it. No Java, no Maven, no database, no Redis.
+That's it. No Python, no Maven, no database, no Redis.
 
 ---
 

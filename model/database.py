@@ -2,7 +2,7 @@
 model/database.py
 
 SQLite in-memory database using Python's built-in sqlite3.
-Equivalent to the H2 in-memory DB used in the Java version.
+Equivalent to the H2 in-memory DB used in the Python version.
 In production: swap connection string for PostgreSQL.
 
 Tables
@@ -72,7 +72,7 @@ def init_db():
 
 
 def seed_accounts():
-    """Seed demo accounts — mirrors DemoService.java."""
+    """Seed demo accounts — mirrors DemoService.Python."""
     accounts = [
         ("alice",   "Alice",   1000.0),
         ("bob",     "Bob",     500.0),

@@ -4,7 +4,7 @@ service/demo.py
 DemoService — pretends to be the sender's phone.
 Builds a PaymentInstruction, encrypts it, wraps it in a MeshPacket,
 and hands it to phone-alice for mesh injection.
-Mirrors DemoService.java.
+Mirrors DemoService.Python.
 """
 
 import uuid

@@ -1,7 +1,7 @@
 """
 controller/api_controller.py
 
-All REST API endpoints — mirrors ApiController.java.
+All REST API endpoints — mirrors ApiController.Python.
 """
 
 from fastapi import APIRouter, Header
@@ -101,6 +101,6 @@ def bridge_ingest(
 ):
     """
     The production-facing endpoint.  Real bridge nodes POST here.
-    Equivalent to /api/bridge/ingest in the Java version.
+    Equivalent to /api/bridge/ingest in the Python version.
     """
     return bridge_ingestion.ingest(packet)
