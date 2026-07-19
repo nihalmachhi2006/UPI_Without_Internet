@@ -2,6 +2,8 @@
 
 FastAPI demo of offline payment packets moving through a simulated mesh and settling once a bridge device reaches the backend.
 
+The UI is intentionally minimal and responsive so the packet flow is easy to follow on desktop and mobile.
+
 ## Run it
 
 ```bash
@@ -20,6 +22,7 @@ Open http://localhost:8080 for the dashboard.
 - Hybrid encryption for payment packets
 - Idempotent bridge ingestion and settlement
 - A small browser dashboard for sending, gossiping, flushing, and resetting packets
+- A responsive layout that stays usable on smaller screens
 
 ## Main routes
 
