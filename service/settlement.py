@@ -1,12 +1,4 @@
-"""
-service/settlement.py
-
-SettlementService — debit sender, credit receiver, write ledger row.
-All three operations happen inside a single DB transaction.
-Optimistic locking via version column: if the row changed since we read it,
-the UPDATE matches 0 rows and we raise an error (defense-in-depth against
-the idempotency cache ever failing in production).
-"""
+"""Settlement logic for transferring balances and writing the ledger."""
 
 import time
 from model.database import get_db
@@ -26,13 +18,7 @@ class OptimisticLockError(Exception):
 
 
 def settle(instruction: PaymentInstruction, packet_hash: str) -> int:
-    """
-    Execute the payment atomically.
-    Returns the new transaction id on success.
-    Raises InsufficientFundsError / AccountNotFoundError / OptimisticLockError.
-    """
     with get_db() as cur:
-        # Read both accounts
         cur.execute(
             "SELECT id, balance, version FROM accounts WHERE id = ?",
             (instruction.sender_id,),
@@ -60,7 +46,6 @@ def settle(instruction: PaymentInstruction, packet_hash: str) -> int:
                 f"needs ₹{instruction.amount:.2f}"
             )
 
-        # Optimistic-lock UPDATE: only succeeds if version hasn't changed
         rows = cur.execute(
             "UPDATE accounts SET balance = ?, version = ? WHERE id = ? AND version = ?",
             (
@@ -85,7 +70,6 @@ def settle(instruction: PaymentInstruction, packet_hash: str) -> int:
         if rows == 0:
             raise OptimisticLockError("Concurrent modification on receiver account")
 
-        # Write ledger
         cur.execute(
             """
             INSERT INTO transactions

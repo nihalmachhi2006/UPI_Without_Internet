@@ -1,11 +1,4 @@
-"""
-service/demo.py
-
-DemoService — pretends to be the sender's phone.
-Builds a PaymentInstruction, encrypts it, wraps it in a MeshPacket,
-and hands it to phone-alice for mesh injection.
-Mirrors DemoService.Python.
-"""
+"""Helpers for building and injecting demo packets into the mesh."""
 
 import uuid
 import time
@@ -19,10 +12,6 @@ INITIAL_TTL = 5
 
 
 def create_and_inject(req: SendRequest) -> MeshPacket:
-    """
-    Simulate the sender phone encrypting a payment and injecting it into the mesh.
-    """
-    # Build the inner payload
     pin_hash = hashlib.sha256(req.pin.encode()).hexdigest()
     payload = {
         "sender_id":   req.sender_id,

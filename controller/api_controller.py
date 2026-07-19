@@ -1,8 +1,4 @@
-"""
-controller/api_controller.py
-
-All REST API endpoints — mirrors ApiController.Python.
-"""
+"""REST API endpoints for the UPI Offline Mesh demo."""
 
 from fastapi import APIRouter, Header
 from typing import Optional
@@ -16,14 +12,10 @@ from service.demo import create_and_inject
 router = APIRouter()
 
 
-# ── Server Key ────────────────────────────────────────────────────────────────
-
 @router.get("/server-key")
 def get_server_key():
     return {"public_key_b64": ServerKeyHolder.get_public_key_b64()}
 
-
-# ── Accounts ──────────────────────────────────────────────────────────────────
 
 @router.get("/accounts")
 def get_accounts():
@@ -32,8 +24,6 @@ def get_accounts():
         rows = cur.fetchall()
     return [dict(r) for r in rows]
 
-
-# ── Transactions ──────────────────────────────────────────────────────────────
 
 @router.get("/transactions")
 def get_transactions():
@@ -52,14 +42,10 @@ def get_transactions():
     return [dict(r) for r in rows]
 
 
-# ── Mesh State ────────────────────────────────────────────────────────────────
-
 @router.get("/mesh/state")
 def mesh_state():
     return mesh_simulator.state()
 
-
-# ── Demo: Sender Phone ────────────────────────────────────────────────────────
 
 @router.post("/demo/send")
 def demo_send(req: SendRequest):
@@ -70,8 +56,6 @@ def demo_send(req: SendRequest):
         "ttl": packet.ttl,
     }
 
-
-# ── Mesh Operations ───────────────────────────────────────────────────────────
 
 @router.post("/mesh/gossip")
 def gossip():
@@ -91,16 +75,10 @@ def reset_mesh():
     return {"message": "Mesh and idempotency cache cleared"}
 
 
-# ── Production Ingest Endpoint ────────────────────────────────────────────────
-
 @router.post("/bridge/ingest", response_model=IngestResponse)
 def bridge_ingest(
     packet: MeshPacket,
     x_bridge_node_id: Optional[str] = Header(default=None),
     x_hop_count: Optional[int] = Header(default=None),
 ):
-    """
-    The production-facing endpoint.  Real bridge nodes POST here.
-    Equivalent to /api/bridge/ingest in the Python version.
-    """
     return bridge_ingestion.ingest(packet)

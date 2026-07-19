@@ -1,13 +1,4 @@
-"""
-service/mesh_simulator.py
-
-MeshSimulatorService — manages the five virtual phones and drives the
-gossip protocol. Mirrors MeshSimulatorService.Python.
-
-Gossip rule: every device broadcasts every packet it holds to every other
-device. TTL decrements by 1 per hop; packets with TTL=0 are dropped.
-In real life this happens organically as people walk past each other.
-"""
+"""Simulation of the mesh devices and gossip flow."""
 
 import threading
 from model.schemas import MeshPacket
@@ -16,7 +7,6 @@ from service import bridge_ingestion
 
 _lock = threading.Lock()
 
-# Five virtual devices — one has internet (the bridge)
 _devices: list[VirtualDevice] = [
     VirtualDevice("phone-alice",   has_internet=False),
     VirtualDevice("phone-bob",     has_internet=False),
@@ -31,19 +21,12 @@ def get_devices() -> list[VirtualDevice]:
 
 
 def inject_to_alice(packet: MeshPacket):
-    """Simulate the sender handing the packet to phone-alice (Step 1 in the demo)."""
     with _lock:
         _devices[0].receive(packet)
 
 
 def gossip_round():
-    """
-    One round: every device broadcasts all packets to all other devices.
-    TTL decrements; packets at TTL=0 are not forwarded.
-    Mirrors MeshSimulatorService.gossipRound().
-    """
     with _lock:
-        # Collect packets to propagate this round (snapshot)
         to_propagate: list[MeshPacket] = []
         for device in _devices:
             for packet in device.get_packets():
@@ -57,19 +40,12 @@ def gossip_round():
                         )
                     )
 
-        # Broadcast each propagated packet to all devices
         for packet in to_propagate:
             for device in _devices:
                 device.receive(packet)
 
 
 def flush_bridges() -> list[dict]:
-    """
-    Bridge devices upload all their packets to the backend in parallel.
-    Returns a list of ingest results.
-    Mirrors MeshSimulatorService.flushBridges().
-    """
-    results = []
     with _lock:
         bridges = [d for d in _devices if d.has_internet]
 
